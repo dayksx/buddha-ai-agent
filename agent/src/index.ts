@@ -64,7 +64,8 @@ import { abstractPlugin } from "@elizaos/plugin-abstract";
 import { avalanchePlugin } from "@elizaos/plugin-avalanche";
 import { webSearchPlugin } from "@elizaos/plugin-web-search";
 import { echoChamberPlugin } from "@elizaos/plugin-echochambers";
-import { tippingPlugin } from "@elizaos/plugin-tipping";
+import { compassionPlugin } from "@elizaos/plugin-compassion";
+// import { testPlugin } from "@elizaos/plugin-test";
 import Database from "better-sqlite3";
 import fs from "fs";
 import path from "path";
@@ -610,7 +611,8 @@ export async function createAgent(
             getSecret(character, "ECHOCHAMBERS_API_KEY")
                 ? echoChamberPlugin
                 : null,
-            //tippingPlugin,
+            compassionPlugin,
+            // testPlugin,
         ].filter(Boolean),
         providers: [],
         actions: [],

@@ -1,7 +1,8 @@
 {
     "name": "buddha",
     "clients": [
-        "telegram"
+        "telegram",
+        "twitter"
     ],
     "modelProvider": "openai",
     "settings": {

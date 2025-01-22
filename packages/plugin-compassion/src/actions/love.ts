@@ -53,162 +53,36 @@ Based on the following conversation, should {{agentName}} continue? YES or NO
 
 Should {{agentName}} continue? ` + booleanFooter;
 
-export const continueAction: Action = {
-    name: "CONTINUE",
-    similes: ["ELABORATE", "KEEP_TALKING"],
+export const loveAction: Action = {
+    name: "LOVE",
+    similes: ["COMPASSION", "META"],
     description:
-        "ONLY use this action when the message necessitates a follow up. Do not use this action when the conversation is finished or the user does not wish to speak (use IGNORE instead). If the last message action was CONTINUE, and the user has not responded. Use sparingly.",
-    validate: async (runtime: IAgentRuntime, message: Memory) => {
-        const recentMessagesData = await runtime.messageManager.getMemories({
-            roomId: message.roomId,
-            count: 10,
-            unique: false,
-        });
-        const agentMessages = recentMessagesData.filter(
-            (m: { userId: any }) => m.userId === runtime.agentId
-        );
+        "ONLY use this action when the message clearly define a will to tip a specific social network user or given public address.",
 
-        // check if the last messages were all continues=
-        if (agentMessages) {
-            const lastMessages = agentMessages.slice(0, maxContinuesInARow);
-            if (lastMessages.length >= maxContinuesInARow) {
-                const allContinues = lastMessages.every(
-                    (m: { content: any }) =>
-                        (m.content as Content).action === "CONTINUE"
-                );
-                if (allContinues) {
-                    return false;
-                }
-            }
-        }
+    // Check if the action should be runned
+    validate: async (runtime: IAgentRuntime, message: Memory) => {
+        // check if the regex correspond to a tipping
+        console.log("[LOVE][VALIDATE]");
+        const text = (message.content as Content).text;
+        console.log("[LOVE][VALIDATE] ", text);
+        // Get memory manager
+        //const memoryManager = runtime.getMemoryManager("messages");
+
+        // Create memory
+        // await memoryManager.createMemory({
+        //     id: messageId,
+        //     content: { text: text },
+        //     userId: userId,
+        // });
 
         return true;
     },
-    handler: async (
-        runtime: IAgentRuntime,
-        message: Memory,
-        state: State,
-        options: any,
-        callback: HandlerCallback
-    ) => {
-        if (!state) {
-            state = (await runtime.composeState(message)) as State;
-        }
-        state = await runtime.updateRecentMessageState(state);
 
-        // Get the agent's recent messages
-        const agentMessages = state.recentMessagesData
-            .filter((m: { userId: any }) => m.userId === runtime.agentId)
-            .sort((a: Memory, b: Memory) => {
-                // Sort by timestamp if available, assuming newer messages have higher timestamps
-                const aTime = a.createdAt || 0;
-                const bTime = b.createdAt || 0;
-                return bTime - aTime;
-            });
-
-        // Check for immediate double response (responding twice in a row to the same message)
-        const lastAgentMessage = agentMessages[0];
-
-        if (lastAgentMessage?.content?.inReplyTo === message.id) {
-            // If our last message was already a response to this message, only allow continue if:
-            // 1. The last message had a CONTINUE action
-            // 2. We haven't hit the maxContinuesInARow limit
-            const continueCount = agentMessages
-            .filter((m: Memory) => m.content?.inReplyTo === message.id)
-            .filter((m: Memory) => m.content?.action === 'CONTINUE')
-            .length;
-
-            if (continueCount >= maxContinuesInARow) {
-                elizaLogger.log(`[CONTINUE] Max continues (${maxContinuesInARow}) reached for this message chain`);
-                return;
-            }
-
-            if (lastAgentMessage.content?.action !== 'CONTINUE') {
-                elizaLogger.log(`[CONTINUE] Last message wasn't a CONTINUE, preventing double response`);
-                return;
-            }
-        }
-
-        // Check if our last message or message ended with a question/exclamation and warrants a stop
-        if ((lastAgentMessage && lastAgentMessage.content.text &&
-            (lastAgentMessage.content.text.endsWith("?") ||
-            lastAgentMessage.content.text.endsWith("!"))) || (message.content.text.endsWith("?") || message.content.text.endsWith("!"))) {
-            elizaLogger.log(`[CONTINUE] Last message had question/exclamation. Not proceeding.`);
-            return;
-        }
-
-        // Prevent exact duplicate messages
-        const messageExists = agentMessages
-            .slice(0, maxContinuesInARow + 1)
-            .some((m: { content: any }) => m.content.text === message.content.text);
-
-        if (messageExists) {
-            return;
-        }
-
-        async function _shouldContinue(state: State): Promise<boolean> {
-            // If none of the above conditions are met, use the generateText to decide
-            const shouldRespondContext = composeContext({
-                state,
-                template: shouldContinueTemplate,
-            });
-
-            const response = await generateTrueOrFalse({
-                context: shouldRespondContext,
-                modelClass: ModelClass.SMALL,
-                runtime,
-            });
-
-            return response;
-        }
-
-        // Use AI to determine if we should continue
-        const shouldContinue = await _shouldContinue(state);
-        if (!shouldContinue) {
-            elizaLogger.log("[CONTINUE] Not elaborating, returning");
-            return;
-        }
-
-        // Generate and send response
-        const context = composeContext({
-            state,
-            template:
-                runtime.character.templates?.continueMessageHandlerTemplate ||
-                runtime.character.templates?.messageHandlerTemplate ||
-                messageHandlerTemplate,
-        });
-        const { userId, roomId } = message;
-
-        const response = await generateMessageResponse({
-            runtime,
-            context,
-            modelClass: ModelClass.LARGE,
-        });
-
-        response.inReplyTo = message.id;
-
-        runtime.databaseAdapter.log({
-            body: { message, context, response },
-            userId,
-            roomId,
-            type: "continue",
-        });
-
-        await callback(response);
-
-        // Check if we need to clear the CONTINUE action
-        if (response.action === "CONTINUE") {
-            const continueCount = agentMessages
-                .slice(0, maxContinuesInARow)
-                .filter((m: Memory) => m.content?.action === 'CONTINUE')
-                .length;
-
-            if (continueCount >= maxContinuesInARow - 1) {  // -1 because we're about to add another
-                response.action = null;
-            }
-        }
-
-        return response;
+    // Implementation of the action of tipping
+    handler: async (runtime: IAgentRuntime, message: Memory) => {
+        console.log("[LOVE][HANDLER] Handling the tipping action!");
+        console.log("[LOVE][HANDLER]", runtime);
+        // Implementation
     },
     examples: [
         [

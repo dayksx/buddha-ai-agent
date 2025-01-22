@@ -1,4 +1,4 @@
-import { composeContext } from "@elizaos/core";
+import { composeContext, createGoal } from "@elizaos/core";
 import { generateText } from "@elizaos/core";
 import { getGoals } from "@elizaos/core";
 import { parseJsonArrayFromText } from "@elizaos/core";
@@ -12,6 +12,26 @@ import {
     Evaluator,
 } from "@elizaos/core";
 
+const goal = {
+    name: "Ethereum Mindshare Growth",
+    description: "Increase Ethereum ecosystem mindshare measured by kaito.ia rating",
+    objectives: [
+        {
+            description: "Achieve minimum kaito.ia rating threshold",
+            completed: false
+        },
+        {
+            description: "Generate sustained positive sentiment in crypto communities",
+            completed: false
+        }
+    ]
+};
+
+await createGoal({runtime, goal});
+// Goal: Increase Ethereum mindshare; KPI: kaito.ia rating
+// Goal: Increase Twitter / Farcaster / ... / followers; KPI: 10% monthly
+// Goal: Increase Tweets mentioning `CONS`, `Consensys Open Network States`, `@StateOS`
+// Goal: Lead conversation recommending a network state
 const goalsTemplate = `TASK: Update Goal
 Analyze the conversation and update the status of the goals based on the new information provided.
 
@@ -78,7 +98,6 @@ async function handler(
         roomId: message.roomId,
         onlyInProgress: options.onlyInProgress as boolean,
     });
-
     // Apply the updates to the goals
     const updatedGoals = goalsData
         .map((goal: Goal) => {
@@ -124,6 +143,19 @@ async function handler(
 
     return updatedGoals; // Return updated goals for further processing or logging
 }
+
+export const compassionEvaluator: Evaluator = {
+    name: "COMPASSION_EVALUATOR",
+    similes: ["LOVE_EVALUATOR"],
+    description: "Evaluates whether the message comes from inner compassion",
+    alwaysRun: true,
+    validate: async (runtime: IAgentRuntime, message: Memory) => true,
+    handler: async (runtime: IAgentRuntime, message: Memory) => {
+        // Evaluation logic here
+        return true;
+    },
+    examples: [],
+};
 
 export const goalEvaluator: Evaluator = {
     name: "UPDATE_GOAL",
